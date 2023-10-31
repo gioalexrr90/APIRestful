@@ -13,9 +13,11 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    const VERIFIED = true;
+    const VERIFIED = false;
 
-    const ADMINISTRATOR = true;
+    const ADMINISTRATOR = false;
+
+    protected $table = 'users';
 
     protected $fillable = [
         'name',
@@ -23,7 +25,7 @@ class User extends Authenticatable
         'password',
         'verified',
         'verification_token',
-        'rol',
+        'admin',
     ];
 
     protected $hidden = [
@@ -32,15 +34,18 @@ class User extends Authenticatable
         'verification_token',
     ];
 
-    public function is_verified(){
+    public function is_verified()
+    {
         return $this->verified == User::VERIFIED;
     }
 
-    public function is_administrator(){
+    public function is_administrator()
+    {
         return $this->administrator == User::ADMINISTRATOR;
     }
 
-    public static function generate_token_verification(){
+    public static function generate_token_verification()
+    {
         return Str::random(40);
     }
 }

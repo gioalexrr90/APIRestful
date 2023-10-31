@@ -18,9 +18,9 @@ return new class extends Migration
             $table->integer('quantity')->unsigned();
             $table->boolean('status')->default(false);
             $table->string('image');
-            $table->integer('seller_id')->unsigned();
+            $table->bigInteger('seller_id')->unsigned()->index()->nullable();
+            $table->foreign('seller_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
-            $table->foreign('seller_id')->references('id')->on('users');
         });
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -12,15 +13,9 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
-    }
+        $usuarios = User::all();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return response()->json(['Data' => $usuarios], 200);
     }
 
     /**
@@ -28,7 +23,23 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $reglas = [
+            'name' => 'required',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6|confirmed',
+        ];
+
+        $this->validate($request, $reglas);
+
+        $campos = $request->all();
+        $campos['password'] = bcrypt($request->password);
+        $campos['verified'] = User::VERIFIED;
+        $campos['verification_token'] = User::generate_token_verification();
+        $campos['admin'] = User::ADMINISTRATOR;
+
+        $usuario = User::create($campos);
+
+        return response()->json(['Data' => $usuario], 201);
     }
 
     /**
@@ -36,15 +47,13 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
-    }
+        //Para encontrar un usuario con el id 
+        //$usuario = User::find($id);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        // Busca un usuario con el id y en caso de no encontrarlo envia un error de no encontrado
+        $usuario = User::findOrFail($id);
+
+        return response()->json(['Data' => $usuario], 200);
     }
 
     /**
@@ -52,7 +61,44 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $usuario = User::findOrFail($id);
+
+        $reglas = [
+            'email' => 'unique:users,email,' . $usuario['id'],
+            'password' => 'min:6|confirmed',
+            'admin' => 'boolean',
+        ];
+
+        $this->validate($request, $reglas);
+
+        if ($request->has('name')) {
+            $usuario['name'] = $request['name'];
+        }
+
+        if ($request->has('email') && $usuario['email'] != $request['email']) {
+            $usuario['verified'] = false; //Si el correo cambia, la verificacion es falsa y se genera nuevo token
+            $usuario['verification_token'] = User::generate_token_verification();
+            $usuario['email'] = $request['email'];
+        }
+
+        if ($request->has('password') && $usuario['password'] != $request['password']) {
+            $usuario['password'] = bcrypt($request['password']);
+        }
+
+        if ($request->has('admin')) {
+            if (!$usuario->is_verified()) {
+                return response()->json(['error' => 'No tienes permisos para hacer esto.', 'code' => 409], 409);
+            }
+            $usuario['admin'] = $request['admin'];
+        }
+
+        if (!$usuario->isDirty()) {
+            return response()->json(['error' => 'Debes cambiar al menos un valor.', 'code' => 422], 422);
+        }
+
+        $usuario->save();
+
+        return response()->json(['Data' => $usuario], 200);
     }
 
     /**
