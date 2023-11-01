@@ -2,65 +2,28 @@
 
 namespace App\Http\Controllers\Buyer;
 
-use App\Http\Controllers\Controller;
-use App\Models\buyer;
+use App\Http\Controllers\ApiController;
+use App\Models\Buyer;
 use Illuminate\Http\Request;
 
-class BuyerController extends Controller
+class BuyerController extends ApiController
 {
     /**
-     * Display a listing of the resource.
+     * Muestra una lista de todos los recursos.
      */
     public function index()
     {
-        return 'hola mundo';
+        $compradores = Buyer::has('transactions')->get();
+        //return response()->json(['Data' => $compradores], 200);
+        return $this->showAll($compradores);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Muestra un recurso en especifico.
      */
-    public function create()
+    public function show(string $id)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(buyer $buyer)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(buyer $buyer)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, buyer $buyer)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(buyer $buyer)
-    {
-        //
+        $comprador = Buyer::has('transactions')->findOrFail($id);
+        return response()->json(['Data' => $comprador], 200);
     }
 }

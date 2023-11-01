@@ -28,6 +28,21 @@ class User extends Authenticatable
         'admin',
     ];
 
+    public function setNameAttribute(string $valor)
+    {
+        $this->attributes['name'] = strtolower($valor);
+    }
+
+    public function getNameAttribute(string $valor)
+    {
+        return ucwords($valor);
+    }
+
+    public function setEmailAttribute(string $valor)
+    {
+        $this->attributes['email'] = strtolower($valor);
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -36,7 +51,7 @@ class User extends Authenticatable
 
     public function is_verified()
     {
-        return $this->verified == User::VERIFIED;
+        return $this->verified == !User::VERIFIED;
     }
 
     public function is_administrator()

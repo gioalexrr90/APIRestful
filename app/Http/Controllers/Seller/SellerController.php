@@ -2,64 +2,30 @@
 
 namespace App\Http\Controllers\Seller;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
+use App\Models\Seller;
 use Illuminate\Http\Request;
 
-class SellerController extends Controller
+class SellerController extends ApiController
 {
     /**
-     * Display a listing of the resource.
+     * Muestra una lista de todos los recursos.
      */
     public function index()
     {
-        //
+        $vendedores = Seller::has('products')->get();
+
+        //return response()->json(['Data' => $vendedores], 200);
+        return $this->showAll($vendedores);
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
+     * Muestra un recurso en especifico.
      */
     public function show(string $id)
     {
-        //
-    }
+        $vendedor = Seller::has('products')->findOrFail($id);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json(['Data' => $vendedor], 200);
     }
 }

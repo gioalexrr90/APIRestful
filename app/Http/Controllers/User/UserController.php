@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\User;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\ApiController;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-class UserController extends Controller
+class UserController extends ApiController
 {
     /**
      * Display a listing of the resource.
@@ -15,7 +15,8 @@ class UserController extends Controller
     {
         $usuarios = User::all();
 
-        return response()->json(['Data' => $usuarios], 200);
+        //return response()->json(['Data' => $usuarios], 200);
+        return $this->showAll($usuarios);
     }
 
     /**
@@ -85,7 +86,7 @@ class UserController extends Controller
             $usuario['password'] = bcrypt($request['password']);
         }
 
-        if ($request->has('admin')) {
+        if ($request->has('admin') && $request['admin'] == false) {
             if (!$usuario->is_verified()) {
                 return response()->json(['error' => 'No tienes permisos para hacer esto.', 'code' => 409], 409);
             }
@@ -106,6 +107,9 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $usuario = User::findOrFail($id);
+        $usuario->delete();
+
+        return response()->json(['Data' => $usuario], 200);
     }
 }
