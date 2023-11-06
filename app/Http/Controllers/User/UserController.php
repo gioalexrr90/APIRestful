@@ -4,7 +4,10 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\ApiController;
 use App\Models\User;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends ApiController
 {
@@ -30,7 +33,12 @@ class UserController extends ApiController
             'password' => 'required|min:6|confirmed',
         ];
 
-        $this->validate($request, $reglas);
+        try {
+            $request->validate($reglas);
+        } catch (Exception $e) {
+            return $this->errorRespose($e->getMessage(), 500);
+        }
+
 
         $campos = $request->all();
         $campos['password'] = bcrypt($request->password);
@@ -40,7 +48,7 @@ class UserController extends ApiController
 
         $usuario = User::create($campos);
 
-        return response()->json(['Data' => $usuario], 201);
+        return $this->showOne($usuario, 201);
     }
 
     /**
@@ -48,13 +56,13 @@ class UserController extends ApiController
      */
     public function show(string $id)
     {
-        //Para encontrar un usuario con el id 
+        //Para encontrar un usuario con el id
         //$usuario = User::find($id);
 
         // Busca un usuario con el id y en caso de no encontrarlo envia un error de no encontrado
         $usuario = User::findOrFail($id);
 
-        return response()->json(['Data' => $usuario], 200);
+        return $this->showOne($usuario);
     }
 
     /**
@@ -62,15 +70,24 @@ class UserController extends ApiController
      */
     public function update(Request $request, string $id)
     {
-        $usuario = User::findOrFail($id);
+        try {
+            $usuario = User::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            $model = strtolower(class_basename($e->getModel()));
+            return $this->errorRespose('Modelo o instancial ' . $model . ' no', 404);
+        }
 
-        $reglas = [
-            'email' => 'unique:users,email,' . $usuario['id'],
-            'password' => 'min:6|confirmed',
-            'admin' => 'boolean',
-        ];
+        try {
+            $reglas = [
+                'email' => 'unique:users,email,' . $usuario['id'],
+                'password' => 'min:6|confirmed',
+                'admin' => 'boolean',
+            ];
 
-        $this->validate($request, $reglas);
+            $request->validate($reglas);
+        } catch (ValidationException $e) {
+            return $this->errorRespose($e->getMessage(), 500);
+        }
 
         if ($request->has('name')) {
             $usuario['name'] = $request['name'];
@@ -99,7 +116,7 @@ class UserController extends ApiController
 
         $usuario->save();
 
-        return response()->json(['Data' => $usuario], 200);
+        return $this->showOne($usuario);
     }
 
     /**
@@ -110,6 +127,6 @@ class UserController extends ApiController
         $usuario = User::findOrFail($id);
         $usuario->delete();
 
-        return response()->json(['Data' => $usuario], 200);
+        return $this->showOne($usuario);
     }
 }

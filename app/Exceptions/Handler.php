@@ -2,7 +2,15 @@
 
 namespace App\Exceptions;
 
+use Exception;
+use Illuminate\Contracts\Database\ModelIdentifier;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -25,6 +33,26 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (Exception $e, Request $request) {
+
+            if ($e instanceof ValidationException) {
+                return $this->convertValidationExceptionToResponse($e, $request);
+            }
+
+            if ($e instanceof ModelNotFoundException) {
+                $model = $e->getModel();
+                return response()->json([
+                    'message' => 'Model or instance ' . $model . 'not found',
+                ], 404);
+            }
+
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Record not found',
+                ], 404);
+            }
         });
     }
 }
