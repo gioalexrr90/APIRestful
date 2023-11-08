@@ -3,6 +3,8 @@
 namespace App\Exceptions;
 
 use Exception;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Database\ModelIdentifier;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -31,28 +33,40 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
-        });
 
         $this->renderable(function (Exception $e, Request $request) {
+
+            if ($e instanceof AuthenticationException) {
+                return $this->unauthenticated($request, $e);
+            }
+
+            if ($e instanceof AuthenticationException) {
+                return response()->json(['message' => $e->getMessage()], 403);
+            }
 
             if ($e instanceof ValidationException) {
                 return $this->convertValidationExceptionToResponse($e, $request);
             }
 
-            if ($e instanceof ModelNotFoundException) {
-                $model = $e->getModel();
-                return response()->json([
-                    'message' => 'Model or instance ' . $model . 'not found',
-                ], 404);
-            }
+            /*  if ($request->is('api/*')) {
 
-            if ($request->is('api/*')) {
+                if ($e->getPrevious() instanceof ModelNotFoundException) {
+                    return response()->json([
+                        'message' => $e->getMessage(),
+                    ], 404);
+                }
+
+                if ($e instanceof NotFoundHttpException) {
+                    return response()->json(['message' => $e->getMessage()], 404);
+                }
+
                 return response()->json([
-                    'message' => 'Record not found',
+                    'message' => $e->getMessage(),
                 ], 404);
-            }
+            } */
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 404);
         });
     }
 }
